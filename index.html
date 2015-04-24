@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<head>
+  <meta charset = UTF-8>
+  <link rel = "stylesheet" href = "gists.css">
+  <script src = "gists.js"></script>
+  <title>Gists at your fingertips!</title>
+</head>
+
+<body>
+  <div id="header">
+  <h1>Welcome to <em>Gists at Your Fingertips!</em></h1>
+  </div>
+
+  <div id="favoritesList">
+    <h3>Favorites</h3>
+    <p>A Gist with a very long title or ID</p>
+  </div>
+  <h2>Choose which Gists you would like to display:</h2>
+    <label>Gist pages to return (5 max):</label>
+    <input id="pageCount" type = "number">
+    <fieldset>
+      <legend>Select the Gist<br>langue</legend>
+      <input name = "langue" value="Python" type="checkbox">
+      <label>Python</label>
+      <input name = "langue" value="JSON" type="checkbox">
+      <label>JSON</label>
+      <input name = "langue" value="Javascript" type="checkbox">
+      <label>Javascript</label>
+      <input name = "langue" value="SQL" type="checkbox">
+      <label>SQL</label>
+      <input name = "langue" value="Haskell" type="checkbox">
+      <label>Haskell</label>
+      <input name = "langue" value="Ruby" type="checkbox">
+      <label>Ruby</label>
+    </fieldset>
+  <button onclick="makeRequest()">Return Results</button>
+</body>
