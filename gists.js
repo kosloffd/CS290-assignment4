@@ -1,5 +1,6 @@
-function makeRequest()
+function makeRequest(pages)
 {
+	var page = [];
 	var httpRequest;
 	if(window.XMLHttpRequest)
 	{
@@ -25,22 +26,25 @@ function makeRequest()
 	{
 		alert("Cannot create an HTML request");
 	}
-	
-	httpRequest.onreadystatechange = displayGists;
-	httpRequest.open("GET", createURL());
-	httpRequest.send();
 
+	httpRequest.onreadystatechange = displayGists;
+	httpRequest.open("GET", createURL(pages));
+	httpRequest.send();
+	
 	function displayGists()
-	{
+	{	
 		if(httpRequest.readyState === 4)
 		{
 			if(httpRequest.status === 200)
-				{
-					//alert("State: " + httpRequest.readyState + "\n" 
-					//	 + "Status: " + httpRequest.status + "\nYou are connected.");
-					//Call a function to parse 
-					createList(parseGists(httpRequest.responseText))
-				}
+			{
+				//---------------Look up array element.
+				page.unshift(parseGists(httpRequest.responseText));	//Add each request to the page array
+				myRecursion(page.length);															//If samller than wanted pages, add more
+				console.log(page.length);
+				console.log(page[1])															
+				createList(page[0]);
+				createPageButtons();																	//Display the first page only
+			}
 			else
 			{
 				alert(httpRequest.status + "\n -the connection could not be established");
@@ -49,64 +53,89 @@ function makeRequest()
 	}
 }
 
-//Get info from page and append to URL
-function createURL()
+function getPageCount()
 {
-	//TODO: get info from HTML and append it.
-	//For now, it's one result onone page.
-	var pages = document.getElementsByTagName("input")[0];
-	var pageValue = pages.data;
-	var url = "https://api.github.com/gists?per_page=2&page=1";
+	var pageTotal = document.getElementsByTagName("input")[0];
+	return pageTotal;
+}
+
+//Get info from page and append to URL
+function createURL(pageNumber)
+{
+	var url = "https://api.github.com/gists?per_page=3&page=" + pageNumber;
 	return url;
 }
+
+function createPageButtons()
+{
+	var pages = getPageCount();
+	for(int i=1; i<=pages; i++)
+	{
+		var pgBtn = document.createElement("button");
+		pgBtn.setAttribute("onclick", createList(this.page[i]));
+		var btnName = document.createTextNode("Page" + (i));
+		pgBtn.appendChild(btnName);
+		body.appendChild(pgBtn);
+	}
+} 
 
 function parseGists(serverText)
 {
 	var gistArray = JSON.parse(serverText);
-	console.log(gistArray.length);
-	/*var gist = JSON.parse(serverText);
-	for(element in gist)
-	{
-		gistArray.push(element);
-		console.log(element);
-	}*/
 	return gistArray;
+}
+
+function myRecursion(arrLength)
+{
+	var numPages = getPageCount();
+	//Very distant recursive call to get other pages into this.page[]
+	if(arrLength < numPages)
+	{
+		makeRequest(arrLength + 1);
+	}
+	else {return;}
 }
 
 function createList(JSONarray)
 {
 	var body = document.getElementsByTagName("body")[0];
 	var heading = document.createElement("h2");
-	var newP = document.createElement("p");
-	var newP2 = document.createElement("p");
-
 	var resultText = document.createTextNode("Results:\n");
-	var openDiv = document.createElement("div");
-	openDiv.setAttribute("id", "gitList");
-	var brk = document.createElement("br");
-
-	body.appendChild(openDiv);
+	var gistDiv = document.createElement("div");
+	gistDiv.setAttribute("id", "gitList");
+	var listBody = document.createElement("ul");
 	heading.appendChild(resultText);
 	body.appendChild(heading);
 
 	for(var i=0; i < JSONarray.length; i++)
 	{
-		var gistText = document.createTextNode("URL: " + JSONarray[i].url);
-		newP.appendChild(gistText);
-		newP.appendChild(brk);
-		gistText = document.createTextNode("Description: " + JSONarray[i].description)
-		newP.appendChild(gistText);
-		newP.appendChild(brk);
-		gistText = document.createTextNode("ID: " + JSONarray[i].id);
-		newP.appendChild(gistText);
-		newP.appendChild(brk);
-		//newP.appendChild(gistText);
-		//body.appendChild(newP);		
-		/*JSONarray[i].files.filename*/
-		body.appendChild(newP);
+		listBody.appendChild(makeHrefItem("URL: ", JSONarray[i].url));
+		listBody.appendChild(makeListItem("Description: ", JSONarray[i].description));
+		listBody.appendChild(makeListItem("ID: ", JSONarray[i].id));
+		listBody.appendChild(makeListItem("File: ", JSONarray[i].files.filename));
+		gistDiv.appendChild(listBody);
+		body.appendChild(gistDiv);
 	}
-	var closeDiv = document.createElement("div");
-	body.appendChild(closeDiv);
+}
+
+function makeListItem(title, data)
+{
+	var line = document.createElement("li");
+	var text = document.createTextNode(title + data);
+	line.appendChild(text);
+	return line;
+}
+
+function makeHrefItem(title, url)
+{
+	var link = document.createElement("a");
+	var line = document.createElement("li");
+  link.appendChild(document.createTextNode(url));
+	link.setAttribute("href", url);
+	var textLine = document.createTextNode(title);
+	line.appendChild(textLine);
+	line.appendChild(link);
+	return line;
 }
 
 
