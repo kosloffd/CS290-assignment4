@@ -1,8 +1,10 @@
-var page = [currentPage];
+var page = [];
 var currentPage = 0;
 window.onload = displayFavList;
 function makeRequest()
 {
+	var pageToBeFilled = page.length;
+	var pageToReturn = page.length + 1;
 	var httpRequest;
 	if(window.XMLHttpRequest)
 	{
@@ -26,24 +28,30 @@ function makeRequest()
 
 	if(!httpRequest)
 	{
-		alert("Cannot create an HTML request");
+		alert("Cannot create a request");
 	}
 
 	httpRequest.onreadystatechange = displayGists;
-	httpRequest.open("GET", createURL(1));
+	httpRequest.open("GET", createURL(pageToReturn));
 	httpRequest.send();
-	
+
 	function displayGists()
 	{	
 		if(httpRequest.readyState === 4)
 		{
 			if(httpRequest.status === 200)
 			{	
-				var newVal = page.unshift(parseGists(httpRequest.responseText));	//Add each request to the page array
-				createSearchResultList(page[0]);
-				/*myRecursion(newVal);															//If samller than wanted pages, add more
-				createPageButton();															
-				*/
+				page[pageToBeFilled] = (parseGists(httpRequest.responseText));	//Add each request to the page array
+				console.log("Filled: Page " + pageToBeFilled);
+				if(doneLoadingPages())
+				{	
+					createSearchResultList(page[currentPage]);
+				}
+				
+				else
+				{
+					makeRequest()
+				}
 			}
 			else
 			{
@@ -53,10 +61,25 @@ function makeRequest()
 	}
 }
 
+function doneLoadingPages()
+{
+	if(page.length < getPageCount())
+	{
+		return false;
+	}
+	else {return true;}
+}
+
 function getPageCount()
 {
-	var pageTotal = document.getElementsByTagName("input")[0];
-	return pageTotal;
+	var pageTotal;
+	if(document.getElementsByTagName("input")[0].value === null)
+	{
+		pageTotal = 1;
+	}
+	pageTotal= document.getElementsByTagName("input")[0].value;
+	if(pageTotal > 5 || pageTotal < 0){alert("Sorry, I can only return 1-5 pages")}
+	else {return pageTotal;}
 }
 
 //Get info from page and append to URL
@@ -65,17 +88,6 @@ function createURL(pageNumber)
 	var url = "https://api.github.com/gists?per_page=3&page=" + pageNumber;
 	return url;
 }
-
-/*
-function createPageButton(num)
-{
-	var pgBtn = document.createElement("button");
-	pgBtn.setAttribute("onclick", "createList(this.page[num])");
-	//var btnName = document.createTextNode("Page" + (num));
-	pgBtn.innerHTML = "Page " + num;
-	body.appendChild(pgBtn);
-} 
-*/
 
 function displayFavList()
 {
@@ -127,14 +139,19 @@ function removeFromFavList(id)
 {
 	for(var i = 0; i<localStorage.length; i++)						
 	{
-		if(localStorage.getItem("id" + i) === id)							// add to gitList from localStorage
+		if(localStorage.getItem("id" + i) === id)							// 
 		{	
-			if(document.getElementById("gitList") !== null)		//If there is a list of gists displayed
-			{																									//add the items from localStorage to it
+			var locationArray = findById(id);
+			var idPageNumber = locationArray[0];
+			
+			//If there is a list of gists displayed and the item to remove from favorites is originally from that page
+			if((document.getElementById("gitList") !== null) && (currentPage == idPageNumber))		
+			{
 				var body = document.getElementsByTagName("body")[0];
 				var gistDiv = document.getElementById("gitList");
 				var listBody = document.createElement("ul");
-				var lang = getLanguage(page[currentPage][i].files);
+			
+				var lang = getLanguage(id);
 
 				listBody.appendChild(makeFavButton(localStorage.getItem("id" + i)));
 				listBody.appendChild(makeListItem("Description: ", localStorage.getItem("desc" + i)));
@@ -160,47 +177,69 @@ function parseGists(serverText)
 	return gistArray;
 }
 
-function myRecursion(arrLength)
-{
-	var numPages = getPageCount();
-	//Very distant recursive call to get other pages into this.page[]
-	if(arrLength < numPages)
-	{
-		makeRequest(arrLength + 1);
-	}
-	else {return;}
-}
-
 function createSearchResultList(JSONarray)
 {
+	if(document.getElementById("gitList") !== null)
+		{
+			var oldList = document.getElementById("gitList");
+			oldList.remove();
+		}
+	
 	var body = document.getElementsByTagName("body")[0];
 	var heading = document.createElement("h2");
 	var resultText = document.createTextNode("Results:\n");
 	var gistDiv = document.createElement("div");
 	gistDiv.setAttribute("id", "gitList");
 	heading.appendChild(resultText);
-	body.appendChild(heading);
+	gistDiv.appendChild(heading);
+	var buttonDiv = createPageButtons(getPageCount());
+	gistDiv.appendChild(buttonDiv);
 
 	for(var i=0; i < JSONarray.length; i++)
 	{
-
 		var listBody = document.createElement("ul");
-		var fileObject = JSONarray[i].files;
-		var fileName = getFileName(fileObject);
-		var lang = getLanguage(fileObject);
 		var desc = JSONarray[i].description;
 		var url = JSONarray[i].url;
+		var objectID = JSONarray[i].id;
+		var fileName = getFileName(objectID);
+		var lang = getLanguage(objectID);
 		
-		if(!checkIfFavorite(JSONarray[i].id))
+		if(!checkIfFavorite(objectID))
 		{
-			listBody.appendChild(makeFavButton(JSONarray[i].id));
+			listBody.appendChild(makeFavButton(objectID));
 			listBody.appendChild(makeListItem("Description: ", desc));
 			listBody.appendChild(makeListItem("Language: ", lang));
 			listBody.appendChild(makeHrefItem("URL: ", url));
 			listBody.appendChild(makeListItem("File: ", fileName));
 			gistDiv.appendChild(listBody);
-			body.appendChild(gistDiv);
-		}
+			body.appendChild(gistDiv);}
+	}
+}
+
+function createPageButtons(num)
+{
+	btnDiv = document.createElement("div");
+	btnDiv.setAttribute("id", "buttonDiv");
+	btnLabel = document.createElement("label");
+	btnLabel.innerHTML = "Pages: ";
+	btnDiv.appendChild(btnLabel);
+	for(var i=1; i<=num; i++)
+	{
+		btn = document.createElement("button");
+		btn.innerHTML = i;
+		btn.setAttribute("id", i-1);
+		btn.setAttribute("onclick", "changePage(this.id)");
+		btnDiv.appendChild(btn);
+	}
+	return btnDiv;
+} 
+
+function changePage(number)
+{
+	if(number !== currentPage)
+	{
+		currentPage = number;
+		createSearchResultList(page[currentPage]);
 	}
 }
 
@@ -219,16 +258,28 @@ function checkIfFavorite(gistID)
 	}
 }
 
-function getFileName(fileObject)
+function getFileName(id)
 {
+	//var pageContent = page[currentPage];
+	//var location = findById(id);
+	var locationArray = findById(id);
+	var pageContent = page[locationArray[0]];
+	var location = locationArray[1];
+	var fileObject = pageContent[location].files;
 	var tmpKeyArray = Object.keys(fileObject);
 	var keyName = tmpKeyArray[0];
 	var filename = fileObject[keyName].filename;
 	return filename;
 }
 
-function getLanguage(fileObject)
+function getLanguage(id)
 {
+	//var pageContent = page[pg];
+	//var location = findById(id);
+				var locationArray = findById(id);
+				var pageContent = page[locationArray[0]];
+				var location = locationArray[1];
+	var fileObject = pageContent[location].files;
 	var tmpKeyArray = Object.keys(fileObject);
 	var keyName = tmpKeyArray[0];
 	var language = fileObject[keyName].language;
@@ -251,36 +302,39 @@ function removeFromList(id)
 
 function addToFavorites(id)
 {
-	var pageContent = page[currentPage];
-	var location = findById(id);
-	
-	var fileObject = pageContent[location].files;
-	var fileName = getFileName(fileObject);
-	var lang = getLanguage(fileObject);
+	//var location = findById(id);
+	//var pageContent = page[currentPage];
+
+				var locationArray = findById(id);
+				var pageContent = page[locationArray[0]];
+				var location = locationArray[1];
+
+	var fileName = getFileName(id);
+	var lang = getLanguage(id);
 	
 	var val = findOpenLocalStorageKey();
-	localStorage.setItem("id" + val, pageContent[location].id);
+	localStorage.setItem("id" + val, id);
 	localStorage.setItem("fileName" + val, fileName);
 	localStorage.setItem("url" + val, pageContent[location].url);
 	localStorage.setItem("desc" + val, pageContent[location].description);
 	removeFromList(id);
 	displayFavList();
-
-	//need a way to refresh the list hereand change the showListFromStorage() or
-	// displayFavList to show ONLY the files in local storage	--right now if I add more
-	//than one, it shows some duplicates.
 }
 
 function findById(id)
 {
-	var location;
-	var pageContent = page[currentPage]; 
-	for(var i=0; i < pageContent.length; i++)						//iterate through objects in the current page
+	var location = [];															//the location is a two variable item. [0] = page, [1] = item
+	for(var i = 0; i < page.length; i++)
 	{
-		if(pageContent[i].id === id)											//check to find the object with this id param
+		var pageContent = page[i]; 
+		for(var j=0; j < pageContent.length; j++)						//iterate through objects in the current page
 		{
-			location = i;
-			return location;
+			if(pageContent[j].id === id)											//check to find the object with this id param
+			{
+				location[0] = i;
+				location[1] = j;
+				return location;
+			}
 		}
 	}
 }
