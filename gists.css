@@ -1,7 +1,7 @@
 #favoritesList
 {
 	float: left;
-	background-color: #c56;
+	background-color: #f89;
 	padding: .5em;
 	width: 15%;
 	padding-bottom: 30%;
@@ -11,7 +11,11 @@
 body
 {
 	margin: 0%;
-	background-color: #bbb;
+	background-color: #eee;
+}
+ul
+{
+	list-style-type: none;
 }
 
 h1
@@ -21,4 +25,9 @@ h1
 	padding: 1.2em;
 	text-align: center;
 	background-color: #a77;
+}
+
+h1, h2, h3
+{
+		font-family: "Arial Rounded MT Bold", "Geneva", "Optima", sans-serif;
 }

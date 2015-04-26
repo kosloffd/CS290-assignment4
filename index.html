@@ -13,7 +13,7 @@
 
   <div id="favoritesList">
     <h3>Favorites</h3>
-    <p>A Gist with a very long title or ID</p>
+    <p id="defaultText">You haven't selected any favorites.</p>
   </div>
   <h2>Choose which Gists you would like to display:</h2>
     <label>Gist pages to return (5 max):</label>
@@ -33,5 +33,6 @@
       <input name = "langue" value="Ruby" type="checkbox">
       <label>Ruby</label>
     </fieldset>
-  <button onclick="makeRequest(1)">Return Results</button>
+  <button onclick="makeRequest()">Return Results</button>
+
 </body>
