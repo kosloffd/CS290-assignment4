@@ -1,6 +1,6 @@
 var page = [currentPage];
 var currentPage = 0;
-window.onLoad = displayFavList();
+window.onload = displayFavList;
 function makeRequest()
 {
 	var httpRequest;
@@ -39,7 +39,6 @@ function makeRequest()
 		{
 			if(httpRequest.status === 200)
 			{	
-				displayFavList();
 				var newVal = page.unshift(parseGists(httpRequest.responseText));	//Add each request to the page array
 				createSearchResultList(page[0]);
 				/*myRecursion(newVal);															//If samller than wanted pages, add more
@@ -53,6 +52,7 @@ function makeRequest()
 		}
 	}
 }
+
 function getPageCount()
 {
 	var pageTotal = document.getElementsByTagName("input")[0];
@@ -81,7 +81,7 @@ function displayFavList()
 {
 	if(localStorage.key(0) !== null)												//If there ARE favorites...
 	{
-		if(document.getElementById("defaultText") !== null)
+		if(document.getElementById("defaultText") !== null)		//if the default text is there
 		{
 			document.getElementById("defaultText").remove();			//remove the default text
 		}			
@@ -91,18 +91,25 @@ function displayFavList()
 
 function showListFromStorage()
 {
-	for(var i = 0; i <(localStorage.length/4); i++)
+	for(var i = 0; i <(localStorage.length); i++)
 	{
-		//var favDiv = document.getElementById("favoritesList");
-		var favListBody = document.createElement("ul");
-		favListBody.appendChild(makeRemoveButton(localStorage.getItem("id" + i)));
-		favListBody.appendChild(makeListItem("Description: ", localStorage.getItem("desc" + i)));
-		favListBody.appendChild(makeListItem("File: ", localStorage.getItem("fileName" + i)));
-		favListBody.appendChild(makeHrefItem("URL: ", localStorage.getItem("url" + i)));
-		favListBody.appendChild(makeListItem("ID: ", localStorage.getItem("id" + i)));
-		if(document.getElementById("favoritesList") !== null)
+		if(localStorage.getItem("id" + i) !==null)										//if that id key is in storage
 		{
-			document.getElementById("favoritesList").appendChild(favListBody);
+			var elementID = localStorage.getItem("id" + i);
+			if(document.getElementById(elementID) === null)							//and if there is no element with that ID on the page		
+			{
+				//if(document.getElementById(elementID).parentElement.parentElement.id !== "favoritesList")		//and it's not already in the favorites list 
+				//{																													
+					var favDiv = document.getElementById("favoritesList");
+					var favListBody = document.createElement("ul");
+					favListBody.appendChild(makeRemoveButton(elementID));
+					favListBody.appendChild(makeListItem("Description: ", localStorage.getItem("desc" + i)));
+					favListBody.appendChild(makeListItem("File: ", localStorage.getItem("fileName" + i)));
+					favListBody.appendChild(makeHrefItem("URL: ", localStorage.getItem("url" + i)));
+					favListBody.appendChild(makeListItem("ID: ", localStorage.getItem("id" + i)));
+					favDiv.appendChild(favListBody);
+				//}
+			}
 		}
 	}
 }
@@ -111,20 +118,19 @@ function makeRemoveButton(id)
 {
 	var btn = document.createElement("button");
 	btn.setAttribute("id", id);
-	btn.setAttribute("onclick", "removeFromFavList(id)");
+	btn.setAttribute("onclick", "removeFromFavList(this.id)");
 	btn.innerHTML = "-";
 	return btn;
 }
 
 function removeFromFavList(id)
 {
-	removeFromList(id);
-	if(document.getElementById("gitList") !== null)		//If there is a list displayed
+	for(var i = 0; i<localStorage.length; i++)						
 	{
-		for(var i = 0; i<localStorage.length/4; i++)						
-		{
-			if(localStorage.getItem("id" + i) === id)							// add to gitList from localStorage
-			{	
+		if(localStorage.getItem("id" + i) === id)							// add to gitList from localStorage
+		{	
+			if(document.getElementById("gitList") !== null)		//If there is a list of gists displayed
+			{																									//add the items from localStorage to it
 				var body = document.getElementsByTagName("body")[0];
 				var gistDiv = document.getElementById("gitList");
 				var listBody = document.createElement("ul");
@@ -137,15 +143,15 @@ function removeFromFavList(id)
 				listBody.appendChild(makeListItem("File: ", localStorage.getItem("fileName" + i)));
 				gistDiv.appendChild(listBody);
 				body.appendChild(gistDiv);																									
-				
-				localStorage.removeItem("id" + i);													//Remove values from local storage
-				localStorage.removeItem("desc" + i);
-				localStorage.removeItem("url" + i);
-				localStorage.removeItem("fileName" + i);
 			}
+
+			localStorage.removeItem("id" + i);													//Remove values from local storage
+			localStorage.removeItem("desc" + i);
+			localStorage.removeItem("url" + i);
+			localStorage.removeItem("fileName" + i);
 		}	
 	}
-	
+	removeFromList(id);																								//refresh the favorites div
 }
 
 function parseGists(serverText)
@@ -258,8 +264,10 @@ function addToFavorites(id)
 	localStorage.setItem("url" + val, pageContent[location].url);
 	localStorage.setItem("desc" + val, pageContent[location].description);
 	removeFromList(id);
+	displayFavList();
+
 	//need a way to refresh the list hereand change the showListFromStorage() or
-	// displayFavList() to show ONLY the files in local storage	--right now if I add more
+	// displayFavList to show ONLY the files in local storage	--right now if I add more
 	//than one, it shows some duplicates.
 }
 
