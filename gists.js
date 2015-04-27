@@ -41,16 +41,22 @@ function makeRequest()
 		{
 			if(httpRequest.status === 200)
 			{	
-				page[pageToBeFilled] = (parseGists(httpRequest.responseText));	//Add each request to the page array
-				console.log("Filled: Page " + pageToBeFilled);
-				if(doneLoadingPages())
-				{	
-					createSearchResultList(page[currentPage]);
-				}
+				if(getPageCount() == null)
+				{window.alert("You need to enter the number of pages to return.");}
+				else if(getPageCount() < 0 || getPageCount() > 5)
+				{window.alert("Sorry, I can only return 1-5 pages.");}
 				
-				else
+				if(!doneLoadingPages())	
 				{
-					makeRequest()
+					page[pageToBeFilled] = parseGists(httpRequest.responseText);	//Add each request to the page array
+					if(doneLoadingPages())
+					{	
+						createSearchResultList(page[currentPage]);
+					}
+					else
+					{
+						makeRequest();
+					}
 				}
 			}
 			else
@@ -63,7 +69,10 @@ function makeRequest()
 
 function doneLoadingPages()
 {
-	if(page.length < getPageCount())
+	if(getPageCount() == null || getPageCount === -1)
+	{return true;}
+
+	else if(page.length < getPageCount())
 	{
 		return false;
 	}
@@ -73,23 +82,24 @@ function doneLoadingPages()
 function getPageCount()
 {
 	var pageTotal;
-	if(document.getElementsByTagName("input")[0].value === null)
+	if(document.getElementsByTagName("input")[0].value === "")		//if the user hasn't entered a page qty
 	{
-		pageTotal = 1;
+		pageTotal = null;
+		return pageTotal;
 	}
-	pageTotal= document.getElementsByTagName("input")[0].value;
-	if(pageTotal > 5 || pageTotal < 0)
+	else
 	{
-		alert("Sorry, I can only return 1-5 pages");
-		return 0;
+		pageTotal = document.getElementsByTagName("input")[0].value;
+		if(pageTotal < 0 || pageTotal > 5)
+		{pageTotal = -1;}
+		return pageTotal;
 	}
-	else {return pageTotal;}
 }
 
 //Get info from page and append to URL
 function createURL(pageNumber)
 {
-	var url = "https://api.github.com/gists?per_page=3&page=" + pageNumber;
+	var url = "https://api.github.com/gists?per_page=30&page=" + pageNumber;
 	return url;
 }
 
@@ -230,11 +240,11 @@ function createPageButtons(num)
 	btnLabel = document.createElement("label");
 	btnLabel.innerHTML = "Pages: ";
 	btnDiv.appendChild(btnLabel);
-	for(var i=1; i<=num; i++)
+	for(var i=0; i<num; i++)
 	{
 		btn = document.createElement("button");
-		btn.innerHTML = i;
-		btn.setAttribute("id", i-1);
+		btn.innerHTML = i+1;
+		btn.setAttribute("id", i);
 		btn.setAttribute("onclick", "changePage(this.id)");
 		btnDiv.appendChild(btn);
 	}
@@ -267,8 +277,6 @@ function checkIfFavorite(gistID)
 
 function getFileName(id)
 {
-	//var pageContent = page[currentPage];
-	//var location = findById(id);
 	var locationArray = findById(id);
 	var pageContent = page[locationArray[0]];
 	var location = locationArray[1];
@@ -281,11 +289,10 @@ function getFileName(id)
 
 function getLanguage(id)
 {
-	//var pageContent = page[pg];
-	//var location = findById(id);
-				var locationArray = findById(id);
-				var pageContent = page[locationArray[0]];
-				var location = locationArray[1];
+	
+	var locationArray = findById(id);
+	var pageContent = page[locationArray[0]];
+	var location = locationArray[1];
 	var fileObject = pageContent[location].files;
 	var tmpKeyArray = Object.keys(fileObject);
 	var keyName = tmpKeyArray[0];
@@ -381,6 +388,7 @@ function makeHrefItem(title, url)
 
 
 
+
 /*
 
 [
@@ -449,3 +457,6 @@ localStorage.setItem("desc" + keyValue, "test");
 
 
 */
+
+
+
