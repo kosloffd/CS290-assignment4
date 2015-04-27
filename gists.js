@@ -78,7 +78,11 @@ function getPageCount()
 		pageTotal = 1;
 	}
 	pageTotal= document.getElementsByTagName("input")[0].value;
-	if(pageTotal > 5 || pageTotal < 0){alert("Sorry, I can only return 1-5 pages")}
+	if(pageTotal > 5 || pageTotal < 0)
+	{
+		alert("Sorry, I can only return 1-5 pages");
+		return 0;
+	}
 	else {return pageTotal;}
 }
 
@@ -139,7 +143,7 @@ function removeFromFavList(id)
 {
 	for(var i = 0; i<localStorage.length; i++)						
 	{
-		if(localStorage.getItem("id" + i) === id)							// 
+		if(localStorage.getItem("id" + i) === id && typeof page[0] !== "undefined")							//if the page[] isn't empty (happens on page reload)
 		{	
 			var locationArray = findById(id);
 			var idPageNumber = locationArray[0];
@@ -161,7 +165,10 @@ function removeFromFavList(id)
 				gistDiv.appendChild(listBody);
 				body.appendChild(gistDiv);																									
 			}
+		}
 
+		if(localStorage.getItem("id" + i) === id)											//Added for when the page[] is empty because the page has been reloaded)
+		{
 			localStorage.removeItem("id" + i);													//Remove values from local storage
 			localStorage.removeItem("desc" + i);
 			localStorage.removeItem("url" + i);
